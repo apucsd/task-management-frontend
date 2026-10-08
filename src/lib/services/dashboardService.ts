@@ -1,28 +1,12 @@
-import { api } from "@/lib/api";
+import { api, ApiResponse } from "@/lib/api";
+import type { DashboardOverview } from "@/types/dashboard";
 
-export interface DashboardOverview {
-  projects: {
-    total: number;
-    active: number;
-  };
-  tasks: {
-    total: number;
-    completed: number;
-    inProgress: number;
-    todo: number;
-    highPriority: number;
-  };
-}
-
-export interface DashboardOverviewResponse {
-  success: boolean;
-  message: string;
-  data: DashboardOverview;
-}
+// Re-export type for backwards compatibility
+export type { DashboardOverview };
 
 export const dashboardService = {
   async getOverview(): Promise<DashboardOverview> {
-    const res = await api.get<DashboardOverviewResponse>("/dashboard/overview");
+    const res = await api.get<ApiResponse<DashboardOverview>>("/dashboard/overview");
     return (
       res.data?.data || {
         projects: { total: 0, active: 0 },
