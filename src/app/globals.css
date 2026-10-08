@@ -136,3 +136,8 @@ body {
     -apple-system,
     sans-serif;
 }
+
+button,
+a {
+  cursor: pointer;
+}
