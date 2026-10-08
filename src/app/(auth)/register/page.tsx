@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiUser, FiMail, FiLock, FiArrowRight } from "react-icons/fi";
+import { toast } from "sonner";
 import { api } from "@/lib/api";
 
 export default function RegisterPage() {
@@ -14,20 +15,20 @@ export default function RegisterPage() {
     password: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
-      await api.post("/auth/register", formData);
+      const { data } = await api.post("/auth/register", formData);
+      toast.success(data?.message || "Registration successful! Please verify OTP.");
       // REDIRECT TO OTP VERIFICATION WITH EMAIL
       sessionStorage.setItem("pendingEmail", formData.email);
       router.push("/verify-otp");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Registration failed");
+      const msg = err.response?.data?.message || "Registration failed";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -42,12 +43,6 @@ export default function RegisterPage() {
             Start organizing tasks with TaskFlow
           </p>
         </div>
-
-        {error && (
-          <div className="mb-4 p-3 text-xs bg-rose-50 text-rose-600 rounded-xl">
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

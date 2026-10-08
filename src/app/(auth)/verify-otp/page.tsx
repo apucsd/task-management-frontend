@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiCheckCircle, FiRotateCw } from "react-icons/fi";
+import { toast } from "sonner";
 import { api } from "@/lib/api";
 
 export default function VerifyOtpPage() {
@@ -11,8 +12,6 @@ export default function VerifyOtpPage() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
 
   useEffect(() => {
     const stored = sessionStorage.getItem("pendingEmail");
@@ -23,14 +22,20 @@ export default function VerifyOtpPage() {
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
-      await api.post("/auth/verify-otp", { email, otp: Number(otp) });
+      const { data } = await api.post("/auth/verify-otp", {
+        email,
+        otp: Number(otp),
+      });
+      toast.success(
+        data?.message || "Account verified successfully! Please log in.",
+      );
       sessionStorage.removeItem("pendingEmail");
       router.push("/login");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Invalid or expired OTP");
+      const msg = err.response?.data?.message || "Invalid or expired OTP";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -38,14 +43,17 @@ export default function VerifyOtpPage() {
 
   const handleResend = async () => {
     setResending(true);
-    setError("");
-    setMessage("");
 
     try {
-      await api.post("/auth/resend-otp", { email, otpType: "REGISTRATION" });
-      setMessage("New OTP sent to your email!");
+      const { data } = await api.post("/auth/resend-registration-otp", {
+        email,
+        otpType: "REGISTRATION",
+      });
+      const successMsg = data?.message || "New OTP sent to your email!";
+      toast.success(successMsg);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to resend OTP");
+      const msg = err.response?.data?.message || "Failed to resend OTP";
+      toast.error(msg);
     } finally {
       setResending(false);
     }
@@ -62,17 +70,6 @@ export default function VerifyOtpPage() {
           We sent a 6-digit code to{" "}
           <span className="font-semibold text-slate-700">{email}</span>
         </p>
-
-        {error && (
-          <div className="mt-4 p-3 text-xs bg-rose-50 text-rose-600 rounded-xl">
-            {error}
-          </div>
-        )}
-        {message && (
-          <div className="mt-4 p-3 text-xs bg-emerald-50 text-emerald-600 rounded-xl">
-            {message}
-          </div>
-        )}
 
         <form onSubmit={handleVerify} className="mt-6 space-y-4">
           <input

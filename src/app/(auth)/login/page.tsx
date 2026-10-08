@@ -4,16 +4,32 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiMail, FiLock, FiArrowRight } from "react-icons/fi";
+import { toast } from "sonner";
+import { api } from "@/lib/api";
+
 export default function LoginPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+
+    try {
+      const { data } = await api.post("/auth/login", formData);
+      if (data?.data?.accessToken) {
+        localStorage.setItem("accessToken", data.data.accessToken);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        toast.success(data?.message || "Login successful!");
+        router.push("/");
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Login failed";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -25,12 +41,6 @@ export default function LoginPage() {
             Sign in to your TaskFlow account
           </p>
         </div>
-
-        {error && (
-          <div className="mb-4 p-3 text-xs bg-rose-50 text-rose-600 rounded-xl">
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
