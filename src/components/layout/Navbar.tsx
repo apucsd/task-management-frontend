@@ -1,0 +1,34 @@
+import { FiSearch, FiBell } from "react-icons/fi";
+
+export function Navbar() {
+  return (
+    <header className="h-16 border-b border-slate-100 bg-white/70 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-10">
+      {/* SEARCH INPUT */}
+      <div className="relative w-80">
+        <FiSearch
+          className="absolute left-3.5 top-3 text-slate-400"
+          size={16}
+        />
+        <input
+          type="text"
+          placeholder="Search projects, tasks..."
+          className="w-full pl-9 pr-12 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white transition"
+        />
+        <kbd className="absolute right-3 top-2.5 text-[10px] bg-slate-200/60 text-slate-500 font-medium px-1.5 py-0.5 rounded">
+          ⌘ K
+        </kbd>
+      </div>
+
+      {/* RIGHT ICONS */}
+      <div className="flex items-center gap-4">
+        <button className="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-xl transition">
+          <FiBell size={18} />
+          <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
+        </button>
+        <div className="w-8 h-8 rounded-full bg-slate-200 border border-slate-100 overflow-hidden flex items-center justify-center text-xs font-bold text-slate-700">
+          JD
+        </div>
+      </div>
+    </header>
+  );
+}
