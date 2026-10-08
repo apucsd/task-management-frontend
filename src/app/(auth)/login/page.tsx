@@ -4,8 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiMail, FiLock, FiArrowRight } from "react-icons/fi";
-import { api } from "@/lib/api";
-
 export default function LoginPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -16,19 +14,6 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-
-    try {
-      const { data } = await api.post("/auth/login", formData);
-      if (data?.data?.accessToken) {
-        localStorage.setItem("accessToken", data.data.accessToken);
-        localStorage.setItem("user", JSON.stringify(data.data.user));
-        router.push("/");
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Login failed");
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
