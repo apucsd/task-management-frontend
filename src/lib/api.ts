@@ -1,28 +1,12 @@
 import axios from "axios";
+export type {
+  ApiResponse,
+  PaginatedResponse,
+  PaginationMeta,
+} from "@/types/api";
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://task-management-backend-1-4aae.onrender.com/api/v1";
-
-export interface ApiResponse<T = any> {
-  success: boolean;
-  message: string;
-  data: T;
-  timestamp?: string;
-}
-
-export interface PaginatedResponse<T = any> {
-  success: boolean;
-  message: string;
-  data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-  timestamp?: string;
-}
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -43,7 +27,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 export const getApiErrorMessage = (err: any): string => {
