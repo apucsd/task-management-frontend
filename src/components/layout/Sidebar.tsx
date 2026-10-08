@@ -8,9 +8,6 @@ import {
   FiHome,
   FiFolder,
   FiCheckSquare,
-  FiCalendar,
-  FiUsers,
-  FiSettings,
   FiGrid,
   FiLogOut,
 } from "react-icons/fi";
@@ -19,9 +16,6 @@ const navItems = [
   { label: "Dashboard", icon: FiHome, href: "/" },
   { label: "Projects", icon: FiFolder, href: "/projects" },
   { label: "Tasks", icon: FiCheckSquare, href: "/tasks" },
-  { label: "Calendar", icon: FiCalendar, href: "/calendar" },
-  { label: "Team", icon: FiUsers, href: "/team" },
-  { label: "Settings", icon: FiSettings, href: "/settings" },
 ];
 
 function SidebarContent() {

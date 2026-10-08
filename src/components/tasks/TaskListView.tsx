@@ -34,19 +34,33 @@ export function TaskListView({
     TaskPriority,
     { label: string; bg: string; text: string }
   > = {
-    HIGH: { label: "High", bg: "bg-rose-50 border-rose-200", text: "text-rose-700" },
+    HIGH: {
+      label: "High",
+      bg: "bg-rose-50 border-rose-200",
+      text: "text-rose-700",
+    },
     MEDIUM: {
       label: "Medium",
       bg: "bg-amber-50 border-amber-200",
       text: "text-amber-700",
     },
-    LOW: { label: "Low", bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-700" },
+    LOW: {
+      label: "Low",
+      bg: "bg-emerald-50 border-emerald-200",
+      text: "text-emerald-700",
+    },
   };
 
   const statusConfig: Record<TaskStatus, { label: string; badge: string }> = {
     TODO: { label: "To Do", badge: "bg-slate-100 text-slate-700" },
-    IN_PROGRESS: { label: "In Progress", badge: "bg-amber-50 text-amber-700 border border-amber-200/60" },
-    DONE: { label: "Completed", badge: "bg-emerald-50 text-emerald-700 border border-emerald-200/60" },
+    IN_PROGRESS: {
+      label: "In Progress",
+      badge: "bg-amber-50 text-amber-700 border border-amber-200/60",
+    },
+    DONE: {
+      label: "Completed",
+      badge: "bg-emerald-50 text-emerald-700 border border-emerald-200/60",
+    },
   };
 
   const handleToggle = async (task: Task) => {
@@ -100,7 +114,8 @@ export function TaskListView({
           </thead>
           <tbody className="divide-y divide-slate-100">
             {tasks.map((task) => {
-              const pConf = priorityConfig[task.priority] || priorityConfig.MEDIUM;
+              const pConf =
+                priorityConfig[task.priority] || priorityConfig.MEDIUM;
               const isOverdue =
                 task.dueDate &&
                 task.status !== "DONE" &&
@@ -118,7 +133,10 @@ export function TaskListView({
                       className="cursor-pointer transition text-slate-300 hover:text-indigo-600"
                     >
                       {task.status === "DONE" ? (
-                        <FiCheckCircle size={18} className="text-emerald-500 fill-emerald-50" />
+                        <FiCheckCircle
+                          size={18}
+                          className="text-emerald-500 fill-emerald-50"
+                        />
                       ) : (
                         <FiCircle size={18} />
                       )}
@@ -130,7 +148,9 @@ export function TaskListView({
                     <div className="font-semibold text-slate-900 truncate">
                       <span
                         className={
-                          task.status === "DONE" ? "line-through text-slate-400" : ""
+                          task.status === "DONE"
+                            ? "line-through text-slate-400"
+                            : ""
                         }
                       >
                         {task.title}
@@ -195,7 +215,8 @@ export function TaskListView({
                           />
                         ) : (
                           <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-[9px]">
-                            {task.assignee.name.slice(0, 2).toUpperCase() || "U"}
+                            {task.assignee.name.slice(0, 2).toUpperCase() ||
+                              "U"}
                           </div>
                         )}
                         <span className="text-[11px] font-medium text-slate-700 max-w-[100px] truncate">
@@ -203,7 +224,9 @@ export function TaskListView({
                         </span>
                       </div>
                     ) : (
-                      <span className="text-slate-400 text-[11px]">Unassigned</span>
+                      <span className="text-slate-400 text-[11px]">
+                        Unassigned
+                      </span>
                     )}
                   </td>
 
@@ -212,7 +235,9 @@ export function TaskListView({
                     {task.dueDate ? (
                       <span
                         className={`inline-flex items-center gap-1 text-[11px] font-medium ${
-                          isOverdue ? "text-rose-600 font-semibold" : "text-slate-600"
+                          isOverdue
+                            ? "text-rose-600 font-semibold"
+                            : "text-slate-600"
                         }`}
                       >
                         <FiCalendar size={12} />

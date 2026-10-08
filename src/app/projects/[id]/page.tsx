@@ -27,11 +27,7 @@ import { ManageMembersModal } from "@/components/projects/ManageMembersModal";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/api";
 
-import {
-  taskService,
-  Task,
-  TaskStatus,
-} from "@/lib/services/taskService";
+import { taskService, Task, TaskStatus } from "@/lib/services/taskService";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { EditTaskModal } from "@/components/tasks/EditTaskModal";
 import { DeleteTaskModal } from "@/components/tasks/DeleteTaskModal";
@@ -115,7 +111,7 @@ function ProjectDetailsContent({
 
   const handleStatusChangeLocal = (taskId: string, newStatus: TaskStatus) => {
     setProjectTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
     );
   };
 
@@ -213,7 +209,8 @@ function ProjectDetailsContent({
             <span>
               Team:{" "}
               <strong className="text-slate-700">
-                {teamMembers.length} {teamMembers.length === 1 ? "member" : "members"}
+                {teamMembers.length}{" "}
+                {teamMembers.length === 1 ? "member" : "members"}
               </strong>
             </span>
           </div>
@@ -221,9 +218,7 @@ function ProjectDetailsContent({
             <FiShield className="text-slate-400" size={16} />
             <span>
               Project Lead:{" "}
-              <strong className="text-slate-700">
-                {project.owner?.name}
-              </strong>
+              <strong className="text-slate-700">{project.owner?.name}</strong>
             </span>
           </div>
         </div>
@@ -233,9 +228,7 @@ function ProjectDetailsContent({
       <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-slate-900">
-              Team Members
-            </h2>
+            <h2 className="text-base font-bold text-slate-900">Team Members</h2>
             <p className="text-xs text-slate-500">
               People collaborating on tasks in this project
             </p>

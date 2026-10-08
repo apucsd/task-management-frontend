@@ -116,7 +116,9 @@ export default function DashboardPage() {
                   <FiFolder size={20} />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-800">No active projects</p>
+                  <p className="text-xs font-bold text-slate-800">
+                    No active projects
+                  </p>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     Create a project to start organizing your tasks
                   </p>
@@ -181,7 +183,9 @@ export default function DashboardPage() {
                   <FiCheckSquare size={20} />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-800">No tasks assigned yet</p>
+                  <p className="text-xs font-bold text-slate-800">
+                    No tasks assigned yet
+                  </p>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     Create tasks within projects to track progress
                   </p>
@@ -204,8 +208,8 @@ export default function DashboardPage() {
                     onStatusChange={(taskId, nextStatus) => {
                       setTasks((prev) =>
                         prev.map((t) =>
-                          t.id === taskId ? { ...t, status: nextStatus } : t
-                        )
+                          t.id === taskId ? { ...t, status: nextStatus } : t,
+                        ),
                       );
                     }}
                   />

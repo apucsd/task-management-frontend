@@ -23,9 +23,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${jakarta.variable} font-sans h-full antialiased`}
     >
-      <body className="min-h-full bg-[#F8FAFC] text-slate-800 flex flex-col">
+      <body
+        suppressHydrationWarning
+        className="min-h-full bg-[#F8FAFC] text-slate-800 flex flex-col"
+      >
         <AuthProvider>{children}</AuthProvider>
         <Toaster position="top-right" richColors closeButton />
       </body>

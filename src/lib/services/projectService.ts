@@ -149,6 +149,11 @@ export const projectService = {
     return res.data;
   },
 
+  // Alias for getAllProjects
+  async getProjects(params?: ProjectsQueryParams): Promise<ProjectsListResponse> {
+    return this.getAllProjects(params);
+  },
+
   // 2. Get single project by ID
   async getProjectById(id: string): Promise<SingleProjectResponse> {
     const res = await api.get<SingleProjectResponse>(`/projects/${id}`);

@@ -46,14 +46,17 @@ export default function TasksPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus | "">("");
-  const [selectedPriority, setSelectedPriority] = useState<TaskPriority | "">("");
+  const [selectedPriority, setSelectedPriority] = useState<TaskPriority | "">(
+    "",
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
   // Modals
   const [createOpen, setCreateOpen] = useState(false);
-  const [initialCreateStatus, setInitialCreateStatus] = useState<TaskStatus>("TODO");
+  const [initialCreateStatus, setInitialCreateStatus] =
+    useState<TaskStatus>("TODO");
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
 
@@ -101,7 +104,9 @@ export default function TasksPage() {
 
   // Quick stats derived from loaded tasks or counts
   const totalTasksCount = totalCount;
-  const inProgressCount = tasks.filter((t) => t.status === "IN_PROGRESS").length;
+  const inProgressCount = tasks.filter(
+    (t) => t.status === "IN_PROGRESS",
+  ).length;
   const completedCount = tasks.filter((t) => t.status === "DONE").length;
   const highPriorityCount = tasks.filter((t) => t.priority === "HIGH").length;
 
@@ -126,7 +131,7 @@ export default function TasksPage() {
 
   const handleStatusChangeLocal = (taskId: string, newStatus: TaskStatus) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
     );
   };
 
@@ -200,8 +205,12 @@ export default function TasksPage() {
                 {totalTasksCount}
               </div>
               <div>
-                <p className="text-[11px] font-medium text-slate-400">Total Tasks</p>
-                <p className="text-xs font-bold text-slate-800">All registered</p>
+                <p className="text-[11px] font-medium text-slate-400">
+                  Total Tasks
+                </p>
+                <p className="text-xs font-bold text-slate-800">
+                  All registered
+                </p>
               </div>
             </div>
 
@@ -210,8 +219,12 @@ export default function TasksPage() {
                 <FiClock size={16} />
               </div>
               <div>
-                <p className="text-[11px] font-medium text-slate-400">In Progress</p>
-                <p className="text-xs font-bold text-amber-700">{inProgressCount} active</p>
+                <p className="text-[11px] font-medium text-slate-400">
+                  In Progress
+                </p>
+                <p className="text-xs font-bold text-amber-700">
+                  {inProgressCount} active
+                </p>
               </div>
             </div>
 
@@ -220,8 +233,12 @@ export default function TasksPage() {
                 <FiCheckCircle size={16} />
               </div>
               <div>
-                <p className="text-[11px] font-medium text-slate-400">Completed</p>
-                <p className="text-xs font-bold text-emerald-700">{completedCount} done</p>
+                <p className="text-[11px] font-medium text-slate-400">
+                  Completed
+                </p>
+                <p className="text-xs font-bold text-emerald-700">
+                  {completedCount} done
+                </p>
               </div>
             </div>
 
@@ -230,8 +247,12 @@ export default function TasksPage() {
                 <FiAlertCircle size={16} />
               </div>
               <div>
-                <p className="text-[11px] font-medium text-slate-400">High Priority</p>
-                <p className="text-xs font-bold text-rose-700">{highPriorityCount} urgent</p>
+                <p className="text-[11px] font-medium text-slate-400">
+                  High Priority
+                </p>
+                <p className="text-xs font-bold text-rose-700">
+                  {highPriorityCount} urgent
+                </p>
               </div>
             </div>
           </div>
@@ -323,7 +344,10 @@ export default function TasksPage() {
                 className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
                 title="Refresh tasks"
               >
-                <FiRefreshCw size={14} className={loading ? "animate-spin" : ""} />
+                <FiRefreshCw
+                  size={14}
+                  className={loading ? "animate-spin" : ""}
+                />
               </button>
             </div>
           </div>
@@ -363,7 +387,8 @@ export default function TasksPage() {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between pt-2">
                   <p className="text-xs text-slate-500">
-                    Page <strong className="text-slate-800">{currentPage}</strong> of{" "}
+                    Page{" "}
+                    <strong className="text-slate-800">{currentPage}</strong> of{" "}
                     <strong className="text-slate-800">{totalPages}</strong>
                   </p>
                   <div className="flex items-center gap-1.5">

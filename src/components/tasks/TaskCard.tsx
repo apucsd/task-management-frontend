@@ -62,7 +62,8 @@ export function TaskCard({
     },
   };
 
-  const currentPriority = priorityConfig[task.priority] || priorityConfig.MEDIUM;
+  const currentPriority =
+    priorityConfig[task.priority] || priorityConfig.MEDIUM;
 
   // Due date formatting & overdue calculation
   const isOverdue =
@@ -86,7 +87,7 @@ export function TaskCard({
       toast.success(
         nextStatus === "DONE"
           ? "Task marked as completed! 🎉"
-          : "Task marked as to-do"
+          : "Task marked as to-do",
       );
       onStatusChange?.(task.id, nextStatus);
     } catch (err: any) {
@@ -101,7 +102,9 @@ export function TaskCard({
     setUpdatingStatus(true);
     try {
       await taskService.updateTaskStatus(task.id, newStatus);
-      toast.success(`Task moved to ${newStatus.replace("_", " ").toLowerCase()}`);
+      toast.success(
+        `Task moved to ${newStatus.replace("_", " ").toLowerCase()}`,
+      );
       onStatusChange?.(task.id, newStatus);
     } catch (err: any) {
       toast.error(getApiErrorMessage(err));
@@ -236,7 +239,9 @@ export function TaskCard({
               className={isOverdue ? "text-rose-600" : "text-slate-400"}
             />
             <span>{formattedDueDate}</span>
-            {isOverdue && <span className="font-bold text-[10px]">Overdue</span>}
+            {isOverdue && (
+              <span className="font-bold text-[10px]">Overdue</span>
+            )}
           </div>
         ) : (
           <div className="text-[11px] text-slate-400 flex items-center gap-1">
