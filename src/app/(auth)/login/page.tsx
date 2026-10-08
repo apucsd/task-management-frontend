@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiMail, FiLock, FiArrowRight } from "react-icons/fi";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import { api, getApiErrorMessage } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,15 +18,33 @@ export default function LoginPage() {
 
     try {
       const { data } = await api.post("/auth/login", formData);
-      if (data?.data?.accessToken) {
-        localStorage.setItem("accessToken", data.data.accessToken);
-        localStorage.setItem("user", JSON.stringify(data.data.user));
-        toast.success(data?.message || "Login successful!");
+      const accessToken = data?.data?.accessToken || data?.accessToken;
+      if (accessToken) {
+        localStorage.setItem("accessToken", accessToken);
+        const user = data?.data?.user || {
+          id: data?.data?.id,
+          email: data?.data?.email,
+          name: data?.data?.name,
+        };
+        localStorage.setItem("user", JSON.stringify(user));
+        toast.success(data?.message || "User logged in successfully");
         router.push("/");
       }
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Login failed";
-      toast.error(msg);
+      const errMsg = getApiErrorMessage(err);
+      toast.error(errMsg);
+
+      // If user account is unverified, redirect to OTP verification
+      const isUnverified =
+        err?.response?.data?.requiresVerification ||
+        errMsg.toLowerCase().includes("verify your email") ||
+        errMsg.toLowerCase().includes("verification");
+
+      if (isUnverified) {
+        sessionStorage.setItem("pendingEmail", formData.email);
+        sessionStorage.setItem("otpType", "REGISTRATION");
+        router.push("/verify-otp");
+      }
     } finally {
       setLoading(false);
     }

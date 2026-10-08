@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiUser, FiMail, FiLock, FiArrowRight } from "react-icons/fi";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import { api, getApiErrorMessage } from "@/lib/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -22,13 +22,12 @@ export default function RegisterPage() {
 
     try {
       const { data } = await api.post("/auth/register", formData);
-      toast.success(data?.message || "Registration successful! Please verify OTP.");
+      toast.success(data?.message || "User registered successfully. Please check your email for verification.");
       // REDIRECT TO OTP VERIFICATION WITH EMAIL
       sessionStorage.setItem("pendingEmail", formData.email);
       router.push("/verify-otp");
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Registration failed";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }

@@ -26,4 +26,15 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+export const getApiErrorMessage = (err: any): string => {
+  const message = err?.response?.data?.message;
+  if (Array.isArray(message)) {
+    return message.join(", ");
+  }
+  if (typeof message === "string" && message.trim().length > 0) {
+    return message;
+  }
+  return err?.message || "Something went wrong";
+};
+
 export default api;

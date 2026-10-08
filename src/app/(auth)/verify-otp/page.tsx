@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiCheckCircle, FiRotateCw } from "react-icons/fi";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import { api, getApiErrorMessage } from "@/lib/api";
 
 export default function VerifyOtpPage() {
   const router = useRouter();
@@ -28,14 +28,31 @@ export default function VerifyOtpPage() {
         email,
         otp: Number(otp),
       });
-      toast.success(
-        data?.message || "Account verified successfully! Please log in.",
-      );
+
+      const otpType = sessionStorage.getItem("otpType");
+      const resetToken =
+        data?.data?.resetToken ||
+        data?.resetToken ||
+        data?.data?.token ||
+        data?.token;
+
+      toast.success(data?.message || "OTP verified successfully");
+
+      if (otpType === "RESET_PASSWORD" || resetToken) {
+        if (resetToken) {
+          localStorage.setItem("resetToken", resetToken);
+        }
+        sessionStorage.removeItem("pendingEmail");
+        sessionStorage.removeItem("otpType");
+        router.push("/reset-password");
+        return;
+      }
+
       sessionStorage.removeItem("pendingEmail");
+      sessionStorage.removeItem("otpType");
       router.push("/login");
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Invalid or expired OTP";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -45,15 +62,19 @@ export default function VerifyOtpPage() {
     setResending(true);
 
     try {
-      const { data } = await api.post("/auth/resend-registration-otp", {
-        email,
-        otpType: "REGISTRATION",
-      });
-      const successMsg = data?.message || "New OTP sent to your email!";
-      toast.success(successMsg);
+      const otpType = sessionStorage.getItem("otpType");
+      if (otpType === "RESET_PASSWORD") {
+        const { data } = await api.post("/auth/forgot-password", { email });
+        toast.success(data?.message || "Reset OTP sent successfully");
+      } else {
+        const { data } = await api.post("/auth/resend-registration-otp", {
+          email,
+          otpType: "REGISTRATION",
+        });
+        toast.success(data?.message || "OTP sent successfully");
+      }
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Failed to resend OTP";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err));
     } finally {
       setResending(false);
     }
