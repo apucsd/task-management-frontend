@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Navbar } from "@/components/layout/Navbar";
 import {
   FiPlus,
   FiSearch,
-  FiFilter,
   FiGrid,
   FiList,
   FiCheckCircle,
@@ -16,6 +15,10 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiX,
+  FiUser,
+  FiZap,
+  FiArrowUp,
+  FiArrowDown,
 } from "react-icons/fi";
 import {
   taskService,
@@ -24,6 +27,7 @@ import {
   TaskPriority,
 } from "@/lib/services/taskService";
 import { projectService, Project } from "@/lib/services/projectService";
+import { useAuth } from "@/context/AuthContext";
 import { KanbanBoard } from "@/components/tasks/KanbanBoard";
 import { TaskListView } from "@/components/tasks/TaskListView";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
@@ -33,8 +37,11 @@ import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/api";
 
 type ViewMode = "kanban" | "list";
+type QuickTab = "all" | "my" | "urgent" | "in_progress" | "done";
+type SortField = "createdAt" | "dueDate";
 
 export default function TasksPage() {
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,14 +49,22 @@ export default function TasksPage() {
   // View mode
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
 
+  // Quick Tab
+  const [activeTab, setActiveTab] = useState<QuickTab>("all");
+
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus | "">("");
-  const [selectedPriority, setSelectedPriority] = useState<TaskPriority | "">(
-    "",
-  );
+  const [selectedPriority, setSelectedPriority] = useState<TaskPriority | "">("");
+
+  // Sorting
+  const [sortField, setSortField] = useState<SortField>("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  // Pagination (default limit 6 as requested)
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -68,17 +83,36 @@ export default function TasksPage() {
       .catch(() => {});
   }, []);
 
-  // Fetch tasks with filters
+  // Fetch tasks with filters & backend sorting
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
+      let assigneeFilter: string | undefined = undefined;
+      let statusFilter: TaskStatus | undefined = selectedStatus || undefined;
+      let priorityFilter: TaskPriority | undefined = selectedPriority || undefined;
+
+      if (activeTab === "my" && user?.id) {
+        assigneeFilter = user.id;
+      } else if (activeTab === "urgent") {
+        priorityFilter = "HIGH";
+      } else if (activeTab === "in_progress") {
+        statusFilter = "IN_PROGRESS";
+      } else if (activeTab === "done") {
+        statusFilter = "DONE";
+      }
+
+      // Backend sort query format: prefix with '-' for descending, field name for ascending
+      const backendSort = sortOrder === "desc" ? `-${sortField}` : sortField;
+
       const res = await taskService.getTasks({
         page: currentPage,
-        limit: viewMode === "kanban" ? 50 : 15,
+        limit: pageSize,
         searchTerm: searchTerm.trim() || undefined,
         projectId: selectedProject || undefined,
-        status: selectedStatus || undefined,
-        priority: selectedPriority || undefined,
+        status: statusFilter,
+        priority: priorityFilter,
+        assigneeId: assigneeFilter,
+        sort: backendSort,
       });
 
       setTasks(res.data || []);
@@ -91,11 +125,15 @@ export default function TasksPage() {
     }
   }, [
     currentPage,
-    viewMode,
+    pageSize,
+    activeTab,
+    user?.id,
     searchTerm,
     selectedProject,
     selectedStatus,
     selectedPriority,
+    sortField,
+    sortOrder,
   ]);
 
   useEffect(() => {
@@ -351,6 +389,32 @@ export default function TasksPage() {
                 <option value="LOW">Low Priority</option>
               </select>
 
+              {/* SORT BY FILTER */}
+              <div className="flex items-center gap-1 bg-slate-50 border border-slate-200/80 rounded-xl px-1">
+                <select
+                  value={sortField}
+                  onChange={(e) => {
+                    setSortField(e.target.value as SortField);
+                    setCurrentPage(1);
+                  }}
+                  className="px-2 py-2 bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer"
+                  title="Sort tasks by"
+                >
+                  <option value="createdAt">Date Created</option>
+                  <option value="dueDate">Due Date</option>
+                </select>
+                <button
+                  onClick={() => {
+                    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+                    setCurrentPage(1);
+                  }}
+                  className="p-1.5 text-slate-500 hover:text-indigo-600 rounded-lg transition cursor-pointer"
+                  title={sortOrder === "asc" ? "Ascending order" : "Descending order"}
+                >
+                  {sortOrder === "asc" ? <FiArrowUp size={13} /> : <FiArrowDown size={13} />}
+                </button>
+              </div>
+
               {/* CLEAR FILTERS */}
               {hasActiveFilters && (
                 <button
@@ -391,51 +455,97 @@ export default function TasksPage() {
                 </div>
               ))}
             </div>
-          ) : viewMode === "kanban" ? (
-            <KanbanBoard
-              tasks={tasks}
-              onEdit={(task) => setEditingTask(task)}
-              onDelete={(task) => setDeletingTask(task)}
-              onStatusChange={handleStatusChangeLocal}
-              onAddNew={(status) => handleOpenCreate(status)}
-            />
           ) : (
             <div className="space-y-4">
-              <TaskListView
-                tasks={tasks}
-                onEdit={(task) => setEditingTask(task)}
-                onDelete={(task) => setDeletingTask(task)}
-                onStatusChange={handleStatusChangeLocal}
-              />
+              {viewMode === "kanban" ? (
+                <KanbanBoard
+                  tasks={tasks}
+                  onEdit={(task) => setEditingTask(task)}
+                  onDelete={(task) => setDeletingTask(task)}
+                  onStatusChange={handleStatusChangeLocal}
+                  onAddNew={(status) => handleOpenCreate(status)}
+                />
+              ) : (
+                <TaskListView
+                  tasks={tasks}
+                  onEdit={(task) => setEditingTask(task)}
+                  onDelete={(task) => setDeletingTask(task)}
+                  onStatusChange={handleStatusChangeLocal}
+                />
+              )}
 
-              {/* PAGINATION (IN LIST VIEW) */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-2">
-                  <p className="text-xs text-slate-500">
-                    Page{" "}
-                    <strong className="text-slate-800">{currentPage}</strong> of{" "}
-                    <strong className="text-slate-800">{totalPages}</strong>
-                  </p>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage <= 1}
-                      className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+              {/* ADVANCED PAGINATION BAR - ALWAYS VISIBLE */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-2xs">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                  <span>
+                    Showing{" "}
+                    <strong className="text-slate-800">
+                      {totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1}
+                    </strong>{" "}
+                    to{" "}
+                    <strong className="text-slate-800">
+                      {Math.min(currentPage * pageSize, totalCount)}
+                    </strong>{" "}
+                    of <strong className="text-slate-800">{totalCount}</strong> tasks
+                  </span>
+
+                  {/* PAGE SIZE SELECTOR */}
+                  <div className="flex items-center gap-1.5 pl-3 border-l border-slate-200">
+                    <span className="text-slate-400">Show:</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => {
+                        setPageSize(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                     >
-                      <FiChevronLeft size={16} />
-                    </button>
-                    <button
-                      onClick={() =>
-                        setCurrentPage((p) => Math.min(totalPages, p + 1))
-                      }
-                      disabled={currentPage >= totalPages}
-                      className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
-                    >
-                      <FiChevronRight size={16} />
-                    </button>
+                      <option value={6}>6 per page</option>
+                      <option value={12}>12 per page</option>
+                      <option value={24}>24 per page</option>
+                      <option value={50}>50 per page</option>
+                    </select>
                   </div>
                 </div>
-              )}
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage <= 1 || loading}
+                    className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                    title="Previous page"
+                  >
+                    <FiChevronLeft size={15} />
+                  </button>
+
+                  {/* NUMBERED PAGE PILLS */}
+                  {Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      disabled={loading}
+                      className={`w-8 h-8 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                        pageNum === currentPage
+                          ? "bg-indigo-600 text-white shadow-xs"
+                          : "hover:bg-slate-100 text-slate-600 border border-slate-200/80 bg-white"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage >= totalPages || loading}
+                    className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                    title="Next page"
+                  >
+                    <FiChevronRight size={15} />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </main>

@@ -39,6 +39,7 @@ export interface TaskQueryParams {
   status?: TaskStatus;
   priority?: TaskPriority;
   assigneeId?: string;
+  sort?: string;
 }
 
 export interface CreateTaskInput {
