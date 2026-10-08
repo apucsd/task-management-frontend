@@ -58,8 +58,8 @@ export default function TasksPage() {
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus | "">("");
   const [selectedPriority, setSelectedPriority] = useState<TaskPriority | "">("");
 
-  // Sorting
-  const [sortField, setSortField] = useState<SortField>("createdAt");
+  // Sorting (initially empty so no sort query param is sent until user selects)
+  const [sortField, setSortField] = useState<SortField | "">("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Pagination (default limit 6 as requested)
@@ -102,7 +102,12 @@ export default function TasksPage() {
       }
 
       // Backend sort query format: prefix with '-' for descending, field name for ascending
-      const backendSort = sortOrder === "desc" ? `-${sortField}` : sortField;
+      // Only sent when user explicitly selects a sort option
+      const backendSort = sortField
+        ? sortOrder === "desc"
+          ? `-${sortField}`
+          : sortField
+        : undefined;
 
       const res = await taskService.getTasks({
         page: currentPage,
@@ -153,6 +158,8 @@ export default function TasksPage() {
     setSelectedProject("");
     setSelectedStatus("");
     setSelectedPriority("");
+    setSortField("");
+    setSortOrder("desc");
     setCurrentPage(1);
   };
 
@@ -160,7 +167,8 @@ export default function TasksPage() {
     Boolean(searchTerm) ||
     Boolean(selectedProject) ||
     Boolean(selectedStatus) ||
-    Boolean(selectedPriority);
+    Boolean(selectedPriority) ||
+    Boolean(sortField);
 
   const handleOpenCreate = (status: TaskStatus = "TODO") => {
     setInitialCreateStatus(status);
@@ -394,21 +402,29 @@ export default function TasksPage() {
                 <select
                   value={sortField}
                   onChange={(e) => {
-                    setSortField(e.target.value as SortField);
+                    setSortField(e.target.value as SortField | "");
                     setCurrentPage(1);
                   }}
                   className="px-2 py-2 bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer"
                   title="Sort tasks by"
                 >
+                  <option value="">Default Order</option>
                   <option value="createdAt">Date Created</option>
                   <option value="dueDate">Due Date</option>
                 </select>
                 <button
                   onClick={() => {
+                    if (!sortField) {
+                      setSortField("createdAt");
+                    }
                     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
                     setCurrentPage(1);
                   }}
-                  className="p-1.5 text-slate-500 hover:text-indigo-600 rounded-lg transition cursor-pointer"
+                  className={`p-1.5 rounded-lg transition cursor-pointer ${
+                    sortField
+                      ? "text-slate-600 hover:text-indigo-600"
+                      : "text-slate-400 hover:text-slate-600"
+                  }`}
                   title={sortOrder === "asc" ? "Ascending order" : "Descending order"}
                 >
                   {sortOrder === "asc" ? <FiArrowUp size={13} /> : <FiArrowDown size={13} />}

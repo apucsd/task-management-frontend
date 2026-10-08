@@ -76,16 +76,6 @@ export function TaskCard({
 
   const getDueLabel = () => {
     if (!dueDateObj) return null;
-    const now = new Date();
-    // Strip time for day comparison
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const taskDay = new Date(dueDateObj.getFullYear(), dueDateObj.getMonth(), dueDateObj.getDate()).getTime();
-    const diffDays = Math.round((taskDay - today) / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return `${Math.abs(diffDays)}d overdue`;
-    if (diffDays === 0) return "Due today";
-    if (diffDays === 1) return "Tomorrow";
-    if (diffDays <= 5) return `In ${diffDays} days`;
     return dueDateObj.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -297,6 +287,11 @@ export function TaskCard({
               className={isOverdue ? "text-rose-600" : "text-slate-400"}
             />
             <span>{dueLabel}</span>
+            {isOverdue && (
+              <span className="text-[9px] font-bold text-rose-700 bg-rose-100/90 px-1 py-0.2 rounded">
+                Overdue
+              </span>
+            )}
           </div>
         ) : (
           <div className="text-[11px] text-slate-400 flex items-center gap-1">
