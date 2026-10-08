@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { FiMail, FiLock, FiArrowRight } from "react-icons/fi";
 import { toast } from "sonner";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { setAuthSession } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,15 +21,18 @@ export default function LoginPage() {
       const { data } = await api.post("/auth/login", formData);
       const accessToken = data?.data?.accessToken || data?.accessToken;
       if (accessToken) {
-        localStorage.setItem("accessToken", accessToken);
         const user = data?.data?.user || {
           id: data?.data?.id,
           email: data?.data?.email,
           name: data?.data?.name,
         };
-        localStorage.setItem("user", JSON.stringify(user));
+        setAuthSession(accessToken, user);
         toast.success(data?.message || "User logged in successfully");
-        router.push("/");
+
+        const redirectParam = typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("redirect")
+          : null;
+        router.push(redirectParam || "/");
       }
     } catch (err: any) {
       const errMsg = getApiErrorMessage(err);
