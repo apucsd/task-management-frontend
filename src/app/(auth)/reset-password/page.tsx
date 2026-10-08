@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiLock, FiArrowRight, FiEye, FiEyeOff } from "react-icons/fi";
 import { toast } from "sonner";
-import { api, getApiErrorMessage } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api";
+import { authService } from "@/lib/services/authService";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      const { data } = await api.post("/auth/reset-password", {
+      const data = await authService.resetPassword({
         resetToken,
         newPassword,
       });

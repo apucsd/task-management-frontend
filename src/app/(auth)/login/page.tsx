@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiMail, FiLock, FiArrowRight } from "react-icons/fi";
 import { toast } from "sonner";
-import { api, getApiErrorMessage } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api";
 import { setAuthSession } from "@/lib/auth";
+import { authService } from "@/lib/services/authService";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,13 +19,13 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { data } = await api.post("/auth/login", formData);
-      const accessToken = data?.data?.accessToken || data?.accessToken;
+      const data = await authService.login(formData);
+      const accessToken = (data as any)?.data?.accessToken || (data as any)?.accessToken;
       if (accessToken) {
-        const user = data?.data?.user || {
-          id: data?.data?.id,
-          email: data?.data?.email,
-          name: data?.data?.name,
+        const user = (data as any)?.data?.user || {
+          id: (data as any)?.data?.id,
+          email: (data as any)?.data?.email,
+          name: (data as any)?.data?.name,
         };
         setAuthSession(accessToken, user);
         toast.success(data?.message || "User logged in successfully");

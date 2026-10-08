@@ -2,20 +2,13 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { api, getApiErrorMessage } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api";
 import { clearAuthSession, getAuthToken } from "@/lib/auth";
+import { authService } from "@/lib/services/authService";
+import type { UserProfile } from "@/types/auth";
 import { toast } from "sonner";
 
-export interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  image?: string | null;
-  status?: string;
-  isVerified?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
+export type { UserProfile };
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -45,11 +38,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const res = await api.get("/users/profile");
-      if (res.data?.success && res.data?.data) {
-        setUser(res.data.data);
+      const res = await authService.getProfile();
+      if (res?.success && res?.data) {
+        setUser(res.data);
         if (typeof window !== "undefined") {
-          localStorage.setItem("user", JSON.stringify(res.data.data));
+          localStorage.setItem("user", JSON.stringify(res.data));
         }
       }
     } catch (err: any) {

@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiMail, FiArrowLeft, FiArrowRight, FiCheckCircle } from "react-icons/fi";
 import { toast } from "sonner";
-import { api, getApiErrorMessage } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api";
+import { authService } from "@/lib/services/authService";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const { data } = await api.post("/auth/forgot-password", { email });
+      const data = await authService.forgotPassword(email);
       toast.success(data?.message || "Please check your email for reset password otp");
       sessionStorage.setItem("pendingEmail", email);
       sessionStorage.setItem("otpType", "RESET_PASSWORD");

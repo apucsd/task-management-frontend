@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiCheckCircle, FiRotateCw } from "react-icons/fi";
 import { toast } from "sonner";
-import { api, getApiErrorMessage } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api";
+import { authService } from "@/lib/services/authService";
 
 export default function VerifyOtpPage() {
   const router = useRouter();
@@ -24,17 +25,17 @@ export default function VerifyOtpPage() {
     setLoading(true);
 
     try {
-      const { data } = await api.post("/auth/verify-otp", {
+      const data = await authService.verifyOtp({
         email,
         otp: Number(otp),
       });
 
       const otpType = sessionStorage.getItem("otpType");
       const resetToken =
-        data?.data?.resetToken ||
-        data?.resetToken ||
-        data?.data?.token ||
-        data?.token;
+        (data as any)?.data?.resetToken ||
+        (data as any)?.resetToken ||
+        (data as any)?.data?.token ||
+        (data as any)?.token;
 
       toast.success(data?.message || "OTP verified successfully");
 
@@ -64,13 +65,10 @@ export default function VerifyOtpPage() {
     try {
       const otpType = sessionStorage.getItem("otpType");
       if (otpType === "RESET_PASSWORD") {
-        const { data } = await api.post("/auth/forgot-password", { email });
+        const data = await authService.forgotPassword(email);
         toast.success(data?.message || "Reset OTP sent successfully");
       } else {
-        const { data } = await api.post("/auth/resend-registration-otp", {
-          email,
-          otpType: "REGISTRATION",
-        });
+        const data = await authService.resendRegistrationOtp(email);
         toast.success(data?.message || "OTP sent successfully");
       }
     } catch (err: any) {
