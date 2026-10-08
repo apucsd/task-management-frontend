@@ -129,10 +129,35 @@ export default function TasksPage() {
     setCreateOpen(true);
   };
 
-  const handleStatusChangeLocal = (taskId: string, newStatus: TaskStatus) => {
+  const handleStatusChangeLocal = async (taskId: string, newStatus: TaskStatus) => {
+    // Find current task to revert if needed
+    const currentTask = tasks.find((t) => t.id === taskId);
+    if (!currentTask || currentTask.status === newStatus) return;
+
+    const previousStatus = currentTask.status;
+
+    // 1. Optimistic UI update
     setTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
     );
+
+    // 2. Persist to backend
+    try {
+      await taskService.updateTaskStatus(taskId, newStatus);
+      const label =
+        newStatus === "DONE"
+          ? "Completed"
+          : newStatus === "IN_PROGRESS"
+          ? "In Progress"
+          : "To Do";
+      toast.success(`Task moved to ${label}`);
+    } catch (err: any) {
+      // Revert optimistic update on failure
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, status: previousStatus } : t)),
+      );
+      toast.error(getApiErrorMessage(err));
+    }
   };
 
   return (

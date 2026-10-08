@@ -109,10 +109,34 @@ function ProjectDetailsContent({
 
   const teamMembers = getUnifiedProjectMembers(project);
 
-  const handleStatusChangeLocal = (taskId: string, newStatus: TaskStatus) => {
+  const handleStatusChangeLocal = async (taskId: string, newStatus: TaskStatus) => {
+    const currentTask = projectTasks.find((t) => t.id === taskId);
+    if (!currentTask || currentTask.status === newStatus) return;
+
+    const previousStatus = currentTask.status;
+
+    // 1. Optimistic UI update
     setProjectTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
     );
+
+    // 2. Persist to backend
+    try {
+      await taskService.updateTaskStatus(taskId, newStatus);
+      const label =
+        newStatus === "DONE"
+          ? "Completed"
+          : newStatus === "IN_PROGRESS"
+          ? "In Progress"
+          : "To Do";
+      toast.success(`Task moved to ${label}`);
+    } catch (err: any) {
+      // Revert on failure
+      setProjectTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, status: previousStatus } : t)),
+      );
+      toast.error(getApiErrorMessage(err));
+    }
   };
 
   return (

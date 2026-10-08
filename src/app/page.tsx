@@ -8,7 +8,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { StatsGrid } from "@/components/dashboard/StatsGrid";
 import { useAuth } from "@/context/AuthContext";
 import { projectService, Project } from "@/lib/services/projectService";
-import { taskService, Task } from "@/lib/services/taskService";
+import { taskService, Task, TaskStatus } from "@/lib/services/taskService";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { TaskCard } from "@/components/tasks/TaskCard";
 import { EditTaskModal } from "@/components/tasks/EditTaskModal";
@@ -18,6 +18,8 @@ import { EditProjectModal } from "@/components/projects/EditProjectModal";
 import { DeleteProjectModal } from "@/components/projects/DeleteProjectModal";
 import { ManageMembersModal } from "@/components/projects/ManageMembersModal";
 import { FiArrowRight, FiFolder, FiCheckSquare } from "react-icons/fi";
+import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/api";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -59,6 +61,34 @@ export default function DashboardPage() {
       setLoadingTasks(false);
     }
   }, []);
+
+  const handleTaskStatusChange = async (taskId: string, newStatus: TaskStatus) => {
+    const currentTask = tasks.find((t) => t.id === taskId);
+    if (!currentTask || currentTask.status === newStatus) return;
+
+    const previousStatus = currentTask.status;
+
+    // Optimistic UI update
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
+    );
+
+    try {
+      await taskService.updateTaskStatus(taskId, newStatus);
+      const label =
+        newStatus === "DONE"
+          ? "Completed"
+          : newStatus === "IN_PROGRESS"
+          ? "In Progress"
+          : "To Do";
+      toast.success(`Task moved to ${label}`);
+    } catch (err: any) {
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, status: previousStatus } : t)),
+      );
+      toast.error(getApiErrorMessage(err));
+    }
+  };
 
   useEffect(() => {
     loadProjects();
@@ -205,13 +235,7 @@ export default function DashboardPage() {
                     task={task}
                     onEdit={(t) => setEditingTask(t)}
                     onDelete={(t) => setDeletingTask(t)}
-                    onStatusChange={(taskId, nextStatus) => {
-                      setTasks((prev) =>
-                        prev.map((t) =>
-                          t.id === taskId ? { ...t, status: nextStatus } : t,
-                        ),
-                      );
-                    }}
+                    onStatusChange={handleTaskStatusChange}
                   />
                 ))}
               </div>
