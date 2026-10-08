@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import {
   FiHome,
   FiFolder,
@@ -9,8 +10,8 @@ import {
   FiCalendar,
   FiUsers,
   FiSettings,
-  FiChevronRight,
   FiGrid,
+  FiLogOut,
 } from "react-icons/fi";
 
 const navItems = [
@@ -24,6 +25,16 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+
+  const displayName = user?.name || "User";
+  const displayEmail = user?.email || "";
+  const initials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "U";
 
   return (
     <aside className="w-64 border-r border-slate-100 bg-white min-h-screen flex flex-col justify-between p-4">
@@ -61,22 +72,39 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* USER CARD */}
-      <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs">
-            JD
+      {/* USER CARD & LOGOUT */}
+      <div className="pt-4 border-t border-slate-100 space-y-2">
+        <div className="flex items-center justify-between p-2.5 rounded-2xl border border-slate-100 bg-slate-50/50">
+          <div className="flex items-center gap-3 min-w-0">
+            {user?.image ? (
+              <img
+                src={user.image}
+                alt={displayName}
+                className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs shrink-0">
+                {initials}
+              </div>
+            )}
+            <div className="text-left min-w-0">
+              <p className="text-xs font-semibold text-slate-800 truncate leading-tight">
+                {displayName}
+              </p>
+              <p className="text-[11px] text-slate-400 truncate leading-tight mt-0.5">
+                {displayEmail}
+              </p>
+            </div>
           </div>
-          <div className="text-left">
-            <p className="text-xs font-semibold text-slate-800 leading-none">
-              John Doe
-            </p>
-            <p className="text-[11px] text-slate-400 mt-1 leading-none">
-              john@example.com
-            </p>
-          </div>
+
+          <button
+            onClick={logout}
+            title="Log out"
+            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition shrink-0 cursor-pointer"
+          >
+            <FiLogOut size={16} />
+          </button>
         </div>
-        <FiChevronRight className="text-slate-400" size={16} />
       </div>
     </aside>
   );
