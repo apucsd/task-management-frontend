@@ -27,6 +27,18 @@ import { ManageMembersModal } from "@/components/projects/ManageMembersModal";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/api";
 
+import {
+  taskService,
+  Task,
+  TaskStatus,
+} from "@/lib/services/taskService";
+import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
+import { EditTaskModal } from "@/components/tasks/EditTaskModal";
+import { DeleteTaskModal } from "@/components/tasks/DeleteTaskModal";
+import { KanbanBoard } from "@/components/tasks/KanbanBoard";
+import { TaskListView } from "@/components/tasks/TaskListView";
+import { FiCheckSquare, FiPlus, FiGrid, FiList } from "react-icons/fi";
+
 function ProjectDetailsContent({
   params,
 }: {
@@ -38,10 +50,21 @@ function ProjectDetailsContent({
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Modals
+  // Tasks state
+  const [projectTasks, setProjectTasks] = useState<Task[]>([]);
+  const [loadingTasks, setLoadingTasks] = useState(true);
+  const [taskViewMode, setTaskViewMode] = useState<"kanban" | "list">("kanban");
+
+  // Project Modals
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
+
+  // Task Modals
+  const [createTaskOpen, setCreateTaskOpen] = useState(false);
+  const [createTaskStatus, setCreateTaskStatus] = useState<TaskStatus>("TODO");
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [deletingTask, setDeletingTask] = useState<Task | null>(null);
 
   const fetchProjectDetails = useCallback(async () => {
     if (!projectId) return;
@@ -57,9 +80,26 @@ function ProjectDetailsContent({
     }
   }, [projectId, router]);
 
+  const fetchProjectTasks = useCallback(async () => {
+    if (!projectId) return;
+    setLoadingTasks(true);
+    try {
+      const res = await taskService.getTasks({
+        projectId,
+        limit: 100,
+      });
+      setProjectTasks(res.data || []);
+    } catch (err: any) {
+      toast.error(getApiErrorMessage(err));
+    } finally {
+      setLoadingTasks(false);
+    }
+  }, [projectId]);
+
   useEffect(() => {
     fetchProjectDetails();
-  }, [fetchProjectDetails]);
+    fetchProjectTasks();
+  }, [fetchProjectDetails, fetchProjectTasks]);
 
   if (loading) {
     return (
@@ -73,8 +113,14 @@ function ProjectDetailsContent({
 
   const teamMembers = getUnifiedProjectMembers(project);
 
+  const handleStatusChangeLocal = (taskId: string, newStatus: TaskStatus) => {
+    setProjectTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+    );
+  };
+
   return (
-    <main className="p-8 max-w-7xl mx-auto w-full space-y-6 flex-1">
+    <main className="p-8 max-w-7xl mx-auto w-full space-y-8 flex-1">
       {/* BACK LINK */}
       <Link
         href="/projects"
@@ -254,7 +300,94 @@ function ProjectDetailsContent({
         </div>
       </div>
 
-      {/* MODALS */}
+      {/* PROJECT TASKS SECTION */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-xs">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <FiCheckSquare size={16} />
+              </div>
+              <h2 className="text-base font-bold text-slate-900">
+                Project Tasks
+              </h2>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                {projectTasks.length}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Deliverables and tracking for {project.name}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            {/* VIEW MODE TOGGLE */}
+            <div className="flex items-center bg-slate-100/80 p-1 rounded-xl">
+              <button
+                onClick={() => setTaskViewMode("kanban")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  taskViewMode === "kanban"
+                    ? "bg-white text-indigo-700 shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <FiGrid size={13} />
+                Board
+              </button>
+              <button
+                onClick={() => setTaskViewMode("list")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  taskViewMode === "list"
+                    ? "bg-white text-indigo-700 shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <FiList size={13} />
+                List
+              </button>
+            </div>
+
+            {/* ADD TASK */}
+            <button
+              onClick={() => {
+                setCreateTaskStatus("TODO");
+                setCreateTaskOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer"
+            >
+              <FiPlus size={14} />
+              Add Task
+            </button>
+          </div>
+        </div>
+
+        {/* TASKS VIEW */}
+        {loadingTasks ? (
+          <div className="flex justify-center p-12 bg-white rounded-3xl border border-slate-100">
+            <FiLoader className="h-6 w-6 animate-spin text-indigo-600" />
+          </div>
+        ) : taskViewMode === "kanban" ? (
+          <KanbanBoard
+            tasks={projectTasks}
+            onEdit={(t) => setEditingTask(t)}
+            onDelete={(t) => setDeletingTask(t)}
+            onStatusChange={handleStatusChangeLocal}
+            onAddNew={(st) => {
+              setCreateTaskStatus(st);
+              setCreateTaskOpen(true);
+            }}
+          />
+        ) : (
+          <TaskListView
+            tasks={projectTasks}
+            onEdit={(t) => setEditingTask(t)}
+            onDelete={(t) => setDeletingTask(t)}
+            onStatusChange={handleStatusChangeLocal}
+          />
+        )}
+      </div>
+
+      {/* PROJECT MODALS */}
       <EditProjectModal
         isOpen={editOpen}
         project={project}
@@ -274,6 +407,29 @@ function ProjectDetailsContent({
         project={project}
         onClose={() => setMembersOpen(false)}
         onSuccess={fetchProjectDetails}
+      />
+
+      {/* TASK MODALS */}
+      <CreateTaskModal
+        isOpen={createTaskOpen}
+        onClose={() => setCreateTaskOpen(false)}
+        onSuccess={fetchProjectTasks}
+        initialProjectId={project.id}
+        initialStatus={createTaskStatus}
+      />
+
+      <EditTaskModal
+        isOpen={Boolean(editingTask)}
+        onClose={() => setEditingTask(null)}
+        onSuccess={fetchProjectTasks}
+        task={editingTask}
+      />
+
+      <DeleteTaskModal
+        isOpen={Boolean(deletingTask)}
+        onClose={() => setDeletingTask(null)}
+        onSuccess={fetchProjectTasks}
+        task={deletingTask}
       />
     </main>
   );
