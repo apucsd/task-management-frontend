@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -23,7 +24,7 @@ const navItems = [
   { label: "Settings", icon: FiSettings, href: "/settings" },
 ];
 
-export function Sidebar() {
+function SidebarContent() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
@@ -107,5 +108,17 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+  );
+}
+
+export function Sidebar() {
+  return (
+    <Suspense
+      fallback={
+        <aside className="w-64 border-r border-slate-100 bg-white min-h-screen p-4 hidden md:block" />
+      }
+    >
+      <SidebarContent />
+    </Suspense>
   );
 }
