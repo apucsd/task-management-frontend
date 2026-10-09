@@ -12,7 +12,7 @@ A modern, responsive, and robust **Fullstack Project & Task Management System** 
 
 ## 🌐 Live Deployment & API
 
-- **Live Frontend**: [Vercel Deployment URL](https://vercel.com) *(or local `http://localhost:3000`)*
+- **Live Frontend (Vercel)**: [https://todo-task-frontend-three.vercel.app](https://todo-task-frontend-three.vercel.app/)
 - **Live Backend API (Azure)**: `https://zmc-taskflow.centralindia.cloudapp.azure.com/api/v1`
 - **Swagger / API Docs**: `https://zmc-taskflow.centralindia.cloudapp.azure.com/api/docs`
 
@@ -117,8 +117,8 @@ src/
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/todo-task-frontend.git
-cd todo-task-frontend
+git clone https://github.com/apucsd/task-management-frontend.git
+cd task-management-frontend
 ```
 
 ### 2. Install dependencies
