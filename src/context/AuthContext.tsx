@@ -3,7 +3,12 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getApiErrorMessage } from "@/lib/api";
-import { clearAuthSession, getAuthToken } from "@/lib/auth";
+import {
+  clearAuthSession,
+  getAuthToken,
+  getAuthUser,
+  setAuthSession,
+} from "@/lib/auth";
 import { authService } from "@/lib/services/authService";
 import type { UserProfile } from "@/types/auth";
 import { toast } from "sonner";
@@ -14,14 +19,16 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   logout: () => void;
-  fetchProfile: () => Promise<void>;
+  fetchProfile: () => Promise<UserProfile | null>;
+  setSession: (token: string, user?: UserProfile | null) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   logout: () => {},
-  fetchProfile: async () => {},
+  fetchProfile: async () => null,
+  setSession: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -29,22 +36,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const fetchProfile = useCallback(async () => {
+  const fetchProfile = useCallback(async (): Promise<UserProfile | null> => {
     const token = getAuthToken();
     if (!token) {
       setUser(null);
       setLoading(false);
-      return;
+      return null;
     }
 
     try {
       const res = await authService.getProfile();
-      if (res?.success && res?.data) {
-        setUser(res.data);
+      const profile = (res as any)?.data?.user || (res as any)?.data || res;
+      if (profile && (profile.id || profile.email || profile.name)) {
+        setUser(profile);
         if (typeof window !== "undefined") {
-          localStorage.setItem("user", JSON.stringify(res.data));
+          localStorage.setItem("user", JSON.stringify(profile));
         }
+        return profile;
       }
+      return null;
     } catch (err: any) {
       console.error("Failed to load user profile:", getApiErrorMessage(err));
       if (err?.response?.status === 401) {
@@ -52,12 +62,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         router.replace("/login");
       }
+      return null;
     } finally {
       setLoading(false);
     }
   }, [router]);
 
+  const setSession = useCallback(
+    async (token: string, userData?: UserProfile | null) => {
+      setAuthSession(token, userData);
+      if (userData && (userData.name || userData.email)) {
+        setUser(userData);
+      }
+      try {
+        const res = await authService.getProfile();
+        const profile = (res as any)?.data?.user || (res as any)?.data || res;
+        if (profile && (profile.id || profile.email || profile.name)) {
+          setUser(profile);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(profile));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load full profile after login:", err);
+      }
+    },
+    []
+  );
+
   useEffect(() => {
+    const cachedUser = getAuthUser();
+    if (cachedUser && (cachedUser.name || cachedUser.email)) {
+      setUser(cachedUser);
+    }
     fetchProfile();
   }, [fetchProfile]);
 
@@ -69,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout, fetchProfile }}>
+    <AuthContext.Provider value={{ user, loading, logout, fetchProfile, setSession }}>
       {children}
     </AuthContext.Provider>
   );

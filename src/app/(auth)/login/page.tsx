@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation";
 import { FiMail, FiLock, FiArrowRight } from "react-icons/fi";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/api";
-import { setAuthSession } from "@/lib/auth";
+import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/lib/services/authService";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setSession } = useAuth();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
@@ -22,12 +23,13 @@ export default function LoginPage() {
       const data = await authService.login(formData);
       const accessToken = (data as any)?.data?.accessToken || (data as any)?.accessToken;
       if (accessToken) {
-        const user = (data as any)?.data?.user || {
+        const rawUser = (data as any)?.data?.user || (data as any)?.user;
+        const user = rawUser || {
           id: (data as any)?.data?.id,
-          email: (data as any)?.data?.email,
+          email: (data as any)?.data?.email || formData.email,
           name: (data as any)?.data?.name,
         };
-        setAuthSession(accessToken, user);
+        await setSession(accessToken, user);
         toast.success(data?.message || "User logged in successfully");
 
         const redirectParam = typeof window !== "undefined"
