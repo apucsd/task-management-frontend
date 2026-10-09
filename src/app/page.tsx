@@ -8,35 +8,23 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { StatsGrid } from "@/components/dashboard/StatsGrid";
 import { useAuth } from "@/context/AuthContext";
 import { projectService, Project } from "@/lib/services/projectService";
-import { taskService, Task, TaskStatus } from "@/lib/services/taskService";
 import { ProjectCard } from "@/components/projects/ProjectCard";
-import { TaskCard } from "@/components/tasks/TaskCard";
-import { EditTaskModal } from "@/components/tasks/EditTaskModal";
-import { DeleteTaskModal } from "@/components/tasks/DeleteTaskModal";
 import { CreateProjectModal } from "@/components/projects/CreateProjectModal";
 import { EditProjectModal } from "@/components/projects/EditProjectModal";
 import { DeleteProjectModal } from "@/components/projects/DeleteProjectModal";
 import { ManageMembersModal } from "@/components/projects/ManageMembersModal";
-import { FiArrowRight, FiFolder, FiCheckSquare } from "react-icons/fi";
-import { toast } from "sonner";
-import { getApiErrorMessage } from "@/lib/api";
+import { FiArrowRight, FiFolder } from "react-icons/fi";
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingTasks, setLoadingTasks] = useState(true);
 
-  // Modals state
+  // Project Modals state
   const [createOpen, setCreateOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
   const [membersProject, setMembersProject] = useState<Project | null>(null);
-
-  // Task modals
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [deletingTask, setDeletingTask] = useState<Task | null>(null);
 
   const loadProjects = useCallback(async () => {
     setLoading(true);
@@ -50,50 +38,9 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const loadTasks = useCallback(async () => {
-    setLoadingTasks(true);
-    try {
-      const res = await taskService.getTasks({ page: 1, limit: 4 });
-      setTasks(res.data || []);
-    } catch {
-      // Handled silently
-    } finally {
-      setLoadingTasks(false);
-    }
-  }, []);
-
-  const handleTaskStatusChange = async (taskId: string, newStatus: TaskStatus) => {
-    const currentTask = tasks.find((t) => t.id === taskId);
-    if (!currentTask || currentTask.status === newStatus) return;
-
-    const previousStatus = currentTask.status;
-
-    // Optimistic UI update
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
-    );
-
-    try {
-      await taskService.updateTaskStatus(taskId, newStatus);
-      const label =
-        newStatus === "DONE"
-          ? "Completed"
-          : newStatus === "IN_PROGRESS"
-          ? "In Progress"
-          : "To Do";
-      toast.success(`Task moved to ${label}`);
-    } catch (err: any) {
-      setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, status: previousStatus } : t)),
-      );
-      toast.error(getApiErrorMessage(err));
-    }
-  };
-
   useEffect(() => {
     loadProjects();
-    loadTasks();
-  }, [loadProjects, loadTasks]);
+  }, [loadProjects]);
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
@@ -155,7 +102,7 @@ export default function DashboardPage() {
                 </div>
                 <button
                   onClick={() => setCreateOpen(true)}
-                  className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-xs transition"
+                  className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer"
                 >
                   Create Project
                 </button>
@@ -169,73 +116,6 @@ export default function DashboardPage() {
                     onEdit={(p) => setEditingProject(p)}
                     onDelete={(p) => setDeletingProject(p)}
                     onManageMembers={(p) => setMembersProject(p)}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* RECENT TASKS */}
-          <section className="space-y-4 pt-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                  Recent Tasks
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Track and advance your active work items
-                </p>
-              </div>
-              <Link
-                href="/tasks"
-                className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition"
-              >
-                View all tasks <FiArrowRight size={14} />
-              </Link>
-            </div>
-
-            {loadingTasks ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs animate-pulse space-y-3"
-                  >
-                    <div className="h-4 w-1/3 bg-slate-100 rounded-md" />
-                    <div className="h-5 w-3/4 bg-slate-100 rounded-md" />
-                    <div className="h-3 w-full bg-slate-100 rounded-md" />
-                  </div>
-                ))}
-              </div>
-            ) : tasks.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-slate-100 p-8 text-center space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
-                  <FiCheckSquare size={20} />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-800">
-                    No tasks assigned yet
-                  </p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Create tasks within projects to track progress
-                  </p>
-                </div>
-                <Link
-                  href="/tasks"
-                  className="inline-block px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-xs transition"
-                >
-                  Go to Tasks Board
-                </Link>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {tasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onEdit={(t) => setEditingTask(t)}
-                    onDelete={(t) => setDeletingTask(t)}
-                    onStatusChange={handleTaskStatusChange}
                   />
                 ))}
               </div>
@@ -270,21 +150,6 @@ export default function DashboardPage() {
         project={membersProject}
         onClose={() => setMembersProject(null)}
         onSuccess={loadProjects}
-      />
-
-      {/* TASK MODALS */}
-      <EditTaskModal
-        isOpen={Boolean(editingTask)}
-        onClose={() => setEditingTask(null)}
-        onSuccess={loadTasks}
-        task={editingTask}
-      />
-
-      <DeleteTaskModal
-        isOpen={Boolean(deletingTask)}
-        onClose={() => setDeletingTask(null)}
-        onSuccess={loadTasks}
-        task={deletingTask}
       />
     </div>
   );
