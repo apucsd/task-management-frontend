@@ -100,7 +100,7 @@ export default function DashboardPage() {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar />
-        <main className="p-8 max-w-7xl mx-auto w-full space-y-8 flex-1">
+        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8 flex-1">
           <DashboardHeader
             name={user?.name || "User"}
             onNewProject={() => setCreateOpen(true)}
